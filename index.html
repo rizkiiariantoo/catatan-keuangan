@@ -12,18 +12,26 @@
     <h1>💰 Pencatatan Keuangan Pribadi</h1>
 
     <!-- SUMMARY CARDS (baru, sebelumnya sudah ada style-nya tapi belum ada HTML-nya) -->
-    <div class="summary-cards">
-        <div class="card card-income">
-            <div class="card-title">Total Pemasukan (IDR)</div>
-            <div class="card-value" id="card-income-value">Rp 0</div>
+    <div class="summary-wrapper">
+        <div class="summary-filter-bar">
+            <label for="filter-tahun-summary" style="font-size:13px; font-weight:600; color:#475569;">Tampilkan tahun:</label>
+            <select id="filter-tahun-summary">
+                <option value="">Semua Tahun</option>
+            </select>
         </div>
-        <div class="card card-expense">
-            <div class="card-title">Total Pengeluaran (IDR)</div>
-            <div class="card-value" id="card-expense-value">Rp 0</div>
-        </div>
-        <div class="card card-balance">
-            <div class="card-title">Saldo (IDR)</div>
-            <div class="card-value" id="card-balance-value">Rp 0</div>
+        <div class="summary-cards">
+            <div class="card card-income">
+                <div class="card-title">Total Pemasukan (IDR)</div>
+                <div class="card-value" id="card-income-value">Rp 0</div>
+            </div>
+            <div class="card card-expense">
+                <div class="card-title">Total Pengeluaran (IDR)</div>
+                <div class="card-value" id="card-expense-value">Rp 0</div>
+            </div>
+            <div class="card card-balance">
+                <div class="card-title">Saldo (IDR)</div>
+                <div class="card-value" id="card-balance-value">Rp 0</div>
+            </div>
         </div>
     </div>
 

@@ -93,26 +93,55 @@ function formatUang(nominal, mataUang) {
 }
 
 // =========================================================================
-// 5. FUNGSI UPDATE SUMMARY CARDS
+// 5. FUNGSI UPDATE SUMMARY CARDS (dengan filter tahun)
 // =========================================================================
 function updateSummaryCards() {
+    const filterEl = document.getElementById('filter-tahun-summary');
+    const tahunDipilih = filterEl ? filterEl.value : '';
+
+    // Update opsi tahun di dropdown summary
+    if (filterEl) {
+        const current = filterEl.value;
+        const tahunSet = new Set();
+        daftarTransaksi.forEach(t => {
+            const th = t.tanggal ? t.tanggal.split('-')[0] : '';
+            if (th) tahunSet.add(th);
+        });
+        filterEl.innerHTML = '<option value="">Semua Tahun</option>';
+        Array.from(tahunSet).sort().reverse().forEach(th => {
+            const o = document.createElement('option');
+            o.value = th; o.textContent = th;
+            if (th === current) o.selected = true;
+            filterEl.appendChild(o);
+        });
+        // Restore pilihan setelah rebuild
+        if (current) filterEl.value = current;
+    }
+
+    const tahunAktif = filterEl ? filterEl.value : '';
+
     let totalIncome = 0;
     let totalExpense = 0;
 
     daftarTransaksi.forEach(function(item) {
-        // Hanya hitung IDR untuk summary cards (USD tidak dijumlahkan langsung)
-        if (item.mataUang === 'IDR') {
-            const nominal = parseFloat(item.nominal) || 0;
-            if (item.jenis === 'income') totalIncome += nominal;
-            else totalExpense += nominal;
-        }
+        if (item.mataUang !== 'IDR') return;
+        if (tahunAktif && !item.tanggal.startsWith(tahunAktif)) return;
+        const nominal = parseFloat(item.nominal) || 0;
+        if (item.jenis === 'income') totalIncome += nominal;
+        else totalExpense += nominal;
     });
 
     const saldo = totalIncome - totalExpense;
 
-    document.getElementById('card-income-value').textContent = formatUang(totalIncome, 'IDR');
+    // Update label judul kartu sesuai filter
+    const labelTahun = tahunAktif ? `Tahun ${tahunAktif}` : 'Semua Waktu';
+    document.querySelector('.card-income .card-title').textContent  = `Pemasukan — ${labelTahun}`;
+    document.querySelector('.card-expense .card-title').textContent = `Pengeluaran — ${labelTahun}`;
+    document.querySelector('.card-balance .card-title').textContent = `Saldo — ${labelTahun}`;
+
+    document.getElementById('card-income-value').textContent  = formatUang(totalIncome, 'IDR');
     document.getElementById('card-expense-value').textContent = formatUang(totalExpense, 'IDR');
-    
+
     const cardBalanceValue = document.getElementById('card-balance-value');
     cardBalanceValue.textContent = formatUang(saldo, 'IDR');
     cardBalanceValue.style.color = saldo >= 0 ? '#10b981' : '#ef4444';
@@ -397,10 +426,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-input');
     const filterJenis = document.getElementById('filter-jenis');
     const filterTahun = document.getElementById('filter-tahun');
+    const filterSummary = document.getElementById('filter-tahun-summary');
 
     if (searchInput) searchInput.addEventListener('input', tampilkanDataKeTabel);
     if (filterJenis) filterJenis.addEventListener('change', tampilkanDataKeTabel);
     if (filterTahun) filterTahun.addEventListener('change', tampilkanDataKeTabel);
+    if (filterSummary) filterSummary.addEventListener('change', updateSummaryCards);
 });
 
 // =========================================================================
