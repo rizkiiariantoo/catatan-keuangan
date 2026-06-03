@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Pencatatan Keuangan</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- JUDUL UTAMA (hanya satu, tidak duplikat) -->
+    <h1>💰 Pencatatan Keuangan Pribadi</h1>
+
+    <!-- SUMMARY CARDS (baru, sebelumnya sudah ada style-nya tapi belum ada HTML-nya) -->
+    <div class="summary-cards">
+        <div class="card card-income">
+            <div class="card-title">Total Pemasukan (IDR)</div>
+            <div class="card-value" id="card-income-value">Rp 0</div>
+        </div>
+        <div class="card card-expense">
+            <div class="card-title">Total Pengeluaran (IDR)</div>
+            <div class="card-value" id="card-expense-value">Rp 0</div>
+        </div>
+        <div class="card card-balance">
+            <div class="card-title">Saldo (IDR)</div>
+            <div class="card-value" id="card-balance-value">Rp 0</div>
+        </div>
+    </div>
+
+    <!-- FORM INPUT TRANSAKSI -->
+    <form id="finance-form">
+        <h2>Pencatatan Transaksi</h2>
+
+        <div class="form-columns-wrapper">
+            
+            <div class="form-left">
+                <div>
+                    <label for="tanggal">Tanggal</label>
+                    <input type="date" id="tanggal" required>
+                </div>
+                <div>
+                    <label for="jenis">Jenis Transaksi</label>
+                    <select id="jenis" required>
+                        <option value="" disabled selected>Pilih Jenis...</option>
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="kategori">Kategori</label>
+                    <select id="kategori" required>
+                        <option value="" disabled selected>Pilih Kategori...</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="sub-kategori">Sub Kategori</label>
+                    <select id="sub-kategori">
+                        <option value="" disabled selected>Pilih Sub Kategori...</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="nominal">Nominal</label>
+                    <input type="number" id="nominal" placeholder="Masukkan nominal..." min="1" required>
+                </div>
+            </div>
+
+            <div class="form-right">
+                <div>
+                    <label for="mata-uang">Mata Uang</label>
+                    <select id="mata-uang" required>
+                        <option value="IDR">IDR - Rupiah</option>
+                        <option value="USD">USD - Dollar</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="pic">PIC</label>
+                    <select id="pic" required>
+                        <option value="" disabled selected>Pilih PIC...</option>
+                        <option value="Ayah">Ayah</option>
+                        <option value="Bunda">Bunda</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="keterangan">Keterangan</label>
+                    <input type="text" id="keterangan" placeholder="Catatan tambahan transaksi...">
+                </div>
+                <div>
+                    <label for="dompet">Dompet / Sumber Dana</label>
+                    <select id="dompet" required>
+                        <option value="Keluarga" selected>Keluarga</option>
+                        <option value="-">-</option>
+                    </select>
+                </div>
+            </div>
+
+        </div>
+
+        <button type="submit" id="btn-simpan">Simpan Transaksi</button>
+    </form>
+
+    <!-- NOTIFIKASI TOAST -->
+    <div id="toast-notifikasi" class="toast-notif"></div>
+
+    <!-- TABS NAVIGASI -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="tampilkanView('list')">📋 Daftar Transaksi</button>
+        <button class="tab-btn" onclick="tampilkanView('rekap')">📊 Rekapitulasi</button>
+    </div>
+
+    <!-- VIEW: REKAPITULASI -->
+    <div id="rekap-view" style="display:none; background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0; overflow-x: auto;">
+        
+        <!-- Filter Tahun Rekap (baru) -->
+        <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+            <label for="filter-tahun-rekap" style="font-weight:600; color:#475569; font-size:13px;">Filter Tahun:</label>
+            <select id="filter-tahun-rekap" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; font-size:14px; outline:none;">
+                <option value="">Semua Tahun</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 30px;">
+            <h3>Ringkasan Bulanan (Total)</h3>
+            <table style="width:100%; border-collapse: collapse; margin-top: 10px; font-size: 13px;">
+                <tr style="background-color: #f1f5f9;">
+                    <th style="border: 1px solid #e2e8f0; padding: 8px; text-align:left;">Jenis</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Jan</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Feb</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Mar</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Apr</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Mei</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Jun</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Jul</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Agu</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Sep</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Okt</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Nov</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Des</th>
+                </tr>
+                <tbody id="rekap-total-body"></tbody>
+            </table>
+        </div>
+
+        <!-- GRAFIK RINGKASAN BULANAN -->
+        <div style="margin-bottom: 30px; margin-top: 10px;">
+            <canvas id="grafik-bulanan" style="width:100%; height:300px; display:block;"></canvas>
+        </div>
+
+        <h3>Rekapitulasi per Kategori</h3>
+        <table id="rekap-table" style="width:100%; border-collapse: collapse; margin-top: 15px; font-size: 11px;">
+            <thead>
+                <tr style="background-color: #f1f5f9;">
+                    <th style="border: 1px solid #e2e8f0; padding: 10px; width: 150px; text-align:left;">Kategori</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Jan</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Feb</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Mar</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Apr</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Mei</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Jun</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Jul</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Agu</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Sep</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Okt</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Nov</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Des</th>
+                </tr>
+            </thead>
+            <tbody id="rekap-body"></tbody>
+        </table>
+
+        <!-- GRAFIK KATEGORI -->
+        <div style="margin-top: 16px; margin-bottom: 30px; background:#fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 16px 8px;">
+            <div style="font-size:13px; font-weight:600; color:#475569; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.4px;">📊 Grafik Total per Kategori</div>
+            <canvas id="grafik-kategori" style="width:100%; display:block;"></canvas>
+        </div>
+
+        <h3 style="margin-top:25px;">Rekapitulasi per Sub-Kategori</h3>
+        <table id="rekap-sub-table" style="width:100%; border-collapse: collapse; margin-top: 15px; font-size: 11px;">
+            <thead>
+                <tr style="background-color: #f1f5f9;">
+                    <th style="border: 1px solid #e2e8f0; padding: 10px; width: 150px; text-align:left;">Sub-Kategori</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Jan</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Feb</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Mar</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Apr</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Mei</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Jun</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Jul</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Agu</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Sep</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Okt</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Nov</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Des</th>
+                </tr>
+            </thead>
+            <tbody id="rekap-sub-body"></tbody>
+        </table>
+
+        <!-- GRAFIK SUB-KATEGORI -->
+        <div style="margin-top: 16px; margin-bottom: 30px; background:#fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 16px 8px;">
+            <div style="font-size:13px; font-weight:600; color:#475569; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.4px;">📊 Grafik Total per Sub-Kategori (hanya yang ada data)</div>
+            <canvas id="grafik-sub-kategori" style="width:100%; display:block;"></canvas>
+        </div>
+
+        <h3 style="margin-top:25px;">Rekapitulasi per PIC</h3>
+        <table id="rekap-pic-table" style="width:100%; border-collapse: collapse; margin-top: 15px; font-size: 11px;">
+            <thead>
+                <tr style="background-color: #f1f5f9;">
+                    <th style="border: 1px solid #e2e8f0; padding: 10px; width: 150px; text-align:left;">PIC</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Jan</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Feb</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Mar</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Apr</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Mei</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Jun</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Jul</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Agu</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Sep</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Okt</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Nov</th>
+                    <th style="border:1px solid #e2e8f0; padding:8px; text-align:center;">Des</th>
+                </tr>
+            </thead>
+            <tbody id="rekap-pic-body"></tbody>
+        </table>
+
+        <!-- GRAFIK PIC -->
+        <div style="margin-top: 16px; margin-bottom: 10px; background:#fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 16px 8px;">
+            <div style="font-size:13px; font-weight:600; color:#475569; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.4px;">📊 Grafik per PIC per Bulan</div>
+            <canvas id="grafik-pic" style="width:100%; display:block;"></canvas>
+        </div>
+
+    </div>
+
+    <!-- VIEW: DAFTAR TRANSAKSI -->
+    <div class="table-container">
+        <h3>Daftar Transaksi</h3>
+        
+        <!-- FILTER & SEARCH BAR (baru, sebelumnya sudah ada style-nya tapi belum ada HTML-nya) -->
+        <div class="table-filter-bar">
+            <input type="text" id="search-input" placeholder="🔍 Cari kategori, keterangan, PIC...">
+            <select id="filter-jenis">
+                <option value="">Semua Jenis</option>
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+            </select>
+            <select id="filter-tahun">
+                <option value="">Semua Tahun</option>
+            </select>
+        </div>
+
+        <div class="table-responsive">
+            <table id="transaction-table">
+                <thead>
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Jenis</th>
+                        <th>Kategori</th>
+                        <th>Sub-Kategori</th>
+                        <th>Nominal</th>
+                        <th>Mata Uang</th>
+                        <th>PIC</th>
+                        <th>Keterangan</th>
+                        <th>Dompet</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT TRANSAKSI -->
+    <div id="modal-edit" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.5); z-index:1000; align-items:center; justify-content:center; padding:20px;">
+        <div style="background:#fff; border-radius:16px; padding:32px; width:100%; max-width:600px; max-height:90vh; overflow-y:auto; box-shadow:0 25px 50px rgba(0,0,0,0.25);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                <h2 style="font-size:18px; font-weight:700; color:#0f172a;">✏️ Edit Transaksi</h2>
+                <button onclick="tutupModalEdit()" style="background:none; border:none; font-size:22px; cursor:pointer; color:#94a3b8; line-height:1;">×</button>
+            </div>
+
+            <form id="form-edit">
+                <input type="hidden" id="edit-index">
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label for="edit-tanggal">Tanggal</label>
+                        <input type="date" id="edit-tanggal" required>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label for="edit-jenis">Jenis Transaksi</label>
+                        <select id="edit-jenis" required>
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label for="edit-kategori">Kategori</label>
+                        <select id="edit-kategori" required>
+                            <option value="" disabled>Pilih Kategori...</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label for="edit-sub-kategori">Sub Kategori</label>
+                        <select id="edit-sub-kategori">
+                            <option value="">- (tidak ada)</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label for="edit-nominal">Nominal</label>
+                        <input type="number" id="edit-nominal" min="1" required>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label for="edit-mata-uang">Mata Uang</label>
+                        <select id="edit-mata-uang">
+                            <option value="IDR">IDR - Rupiah</option>
+                            <option value="USD">USD - Dollar</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label for="edit-pic">PIC</label>
+                        <select id="edit-pic" required>
+                            <option value="Ayah">Ayah</option>
+                            <option value="Bunda">Bunda</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px;">
+                        <label for="edit-dompet">Dompet / Sumber Dana</label>
+                        <select id="edit-dompet">
+                            <option value="Keluarga">Keluarga</option>
+                            <option value="-">-</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:6px; grid-column:1/-1;">
+                        <label for="edit-keterangan">Keterangan</label>
+                        <input type="text" id="edit-keterangan" placeholder="Catatan tambahan...">
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:12px; margin-top:24px;">
+                    <button type="submit" style="flex:1; background:#2563eb; color:#fff; border:none; padding:13px; font-size:14px; font-weight:600; border-radius:8px; cursor:pointer;">Simpan Perubahan</button>
+                    <button type="button" onclick="tutupModalEdit()" style="flex:1; background:#f1f5f9; color:#475569; border:1px solid #e2e8f0; padding:13px; font-size:14px; font-weight:600; border-radius:8px; cursor:pointer;">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
