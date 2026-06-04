@@ -9,7 +9,7 @@ const dataKeuangan = {
         "Pendapatan Investasi": ["Hasil Investasi", "Jual Aset", "Dividen"] 
     },
     expense: {
-        "Kebutuhan Pokok": ["Bahan Masak", "Kebersihan", "Anak & Bayi", "Tagihan Rumah", "Pulsa/Internet", "Transportasi", "Pemeliharaan", "Kesehatan & Obat", "Pendidikan Anak"],
+        "Kebutuhan Pokok": ["Bahan Masak", "Buah", "Kebersihan", "Anak & Bayi", "Tagihan Rumah", "Pulsa/Internet", "Transportasi", "Pemeliharaan", "Kesehatan & Obat", "Pendidikan Anak"],
         "Gaya Hidup & Hiburan": ["Makan diluar & Jajan", "Fashion", "Self-Care", "Barang/Peralatan", "Hiburan & Rekreasi", "Hobi", "Edukasi & Pengembangan diri"],
         "Masa Depan": ["KPR", "Investasi", "Tabungan & Arisan", "Cicilan Barang"],
         "Sosial & Keluarga": ["Kado", "Keluarga Besar", "Zakat & Sedekah", "Dana Sosial"],
@@ -581,7 +581,7 @@ function hitungRekap() {
         "Gaji Pokok","Tunjangan Kinerja","Uang Makan",
         "Honor","Insentif/Bonus/THR","Passive Income","Side Hustle","Digital Content","Endorsment",
         "Piutang/Pinjaman","Refund/Cashback","Barang Bekas","Kado/Angpao","Arisan","Reimburst","Jual Aset","Dividen",
-        "Bahan Masak","Kebersihan","Anak & Bayi","Tagihan Rumah","Pulsa/Internet","Transportasi","Pemeliharaan","Kesehatan & Obat","Pendidikan Anak",
+        "Bahan Masak","Buah","Kebersihan","Anak & Bayi","Tagihan Rumah","Pulsa/Internet","Transportasi","Pemeliharaan","Kesehatan & Obat","Pendidikan Anak",
         "Makan diluar & Jajan","Fashion","Self-Care","Barang/Peralatan","Hiburan & Rekreasi","Hobi","Edukasi & Pengembangan diri",
         "KPR","Investasi","Tabungan & Arisan","Cicilan Barang",
         "Kado","Keluarga Besar","Zakat & Sedekah","Dana Sosial",
