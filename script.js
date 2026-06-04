@@ -646,9 +646,9 @@ function fmtAngka(v) {
     return (v < 0 ? '-' : '') + (a >= 1e9 ? (a/1e9).toFixed(1)+'M' : a >= 1e6 ? (a/1e6).toFixed(1)+'jt' : a >= 1e3 ? (a/1e3).toFixed(0)+'rb' : a.toFixed(0));
 }
 
-// Gambar area bertumpuk (stacked area) + garis di atasnya
-// series: [{ label, color, data[12] }, ...]  — urutan bawah ke atas
-function drawStackedArea(ctx, W, H, namaBulan, series, opts = {}) {
+// Gambar line chart — setiap seri tampil sebagai garis independen (bukan ditumpuk)
+// series: [{ label, color, data[12] }, ...]
+function drawLineChart(ctx, W, H, namaBulan, series, opts = {}) {
     const padTop   = opts.padTop   || 30;
     const padBot   = opts.padBot   || 45;
     const padLeft  = opts.padLeft  || 68;
@@ -656,64 +656,56 @@ function drawStackedArea(ctx, W, H, namaBulan, series, opts = {}) {
     const chartW   = W - padLeft - padRight;
     const chartH   = H - padTop - padBot;
 
-    // Hitung stack per bulan
-    const stacked = Array.from({length: 12}, (_, i) => {
-        let cum = 0;
-        return series.map(s => { cum += (s.data[i] || 0); return cum; });
-    }); // stacked[bulan][seriesIdx] = nilai kumulatif
+    // Nilai maks dari semua seri (tidak ditumpuk)
+    const allVals = series.flatMap(s => s.data);
+    const maxVal  = Math.max(...allVals, 1) * 1.12;
 
-    const maxVal = Math.max(...stacked.flat(), 1) * 1.12;
-
-    const xOf  = i  => padLeft + i * (chartW / 11);
-    const yOf  = v  => padTop + chartH - (v / maxVal) * chartH;
+    const xOf = i => padLeft + i * (chartW / 11);
+    const yOf = v => padTop + chartH - (v / maxVal) * chartH;
 
     // Gridlines & label Y
     ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
-    for (let s = 0; s <= 5; s++) {
-        const v = maxVal * s / 5;
+    for (let g = 0; g <= 5; g++) {
+        const v = maxVal * g / 5;
         const y = yOf(v);
         ctx.beginPath(); ctx.moveTo(padLeft, y); ctx.lineTo(W - padRight, y); ctx.stroke();
         ctx.fillStyle = '#94a3b8'; ctx.font = '10px Segoe UI,sans-serif'; ctx.textAlign = 'right';
         ctx.fillText(fmtAngka(v), padLeft - 5, y + 4);
     }
 
-    // Gambar area bertumpuk dari seri terbesar ke terkecil (reverse agar tumpuk benar)
-    for (let si = series.length - 1; si >= 0; si--) {
-        const topVals    = stacked.map(s => s[si]);
-        const bottomVals = si === 0 ? Array(12).fill(0) : stacked.map(s => s[si - 1]);
-
+    // Gambar setiap seri sebagai garis + area tipis di bawahnya
+    series.forEach(s => {
+        // Area tipis (fill) di bawah garis
         ctx.beginPath();
-        // Garis atas kiri → kanan
-        ctx.moveTo(xOf(0), yOf(topVals[0]));
-        for (let i = 1; i < 12; i++) ctx.lineTo(xOf(i), yOf(topVals[i]));
-        // Balik kanan → kiri di garis bawah
-        for (let i = 11; i >= 0; i--) ctx.lineTo(xOf(i), yOf(bottomVals[i]));
+        ctx.moveTo(xOf(0), yOf(s.data[0] || 0));
+        for (let i = 1; i < 12; i++) ctx.lineTo(xOf(i), yOf(s.data[i] || 0));
+        ctx.lineTo(xOf(11), yOf(0));
+        ctx.lineTo(xOf(0),  yOf(0));
         ctx.closePath();
-
-        const hex = series[si].color;
-        ctx.fillStyle = hex + '55'; // transparan 33%
+        ctx.fillStyle = s.color + '22'; // sangat transparan
         ctx.fill();
 
-        // Garis tepi atas
+        // Garis utama
         ctx.beginPath();
-        ctx.moveTo(xOf(0), yOf(topVals[0]));
-        for (let i = 1; i < 12; i++) ctx.lineTo(xOf(i), yOf(topVals[i]));
-        ctx.strokeStyle = series[si].color;
-        ctx.lineWidth = 2;
+        ctx.moveTo(xOf(0), yOf(s.data[0] || 0));
+        for (let i = 1; i < 12; i++) ctx.lineTo(xOf(i), yOf(s.data[i] || 0));
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth   = 2.5;
+        ctx.lineJoin    = 'round';
         ctx.stroke();
 
-        // Titik data
+        // Titik data — hanya yang ada nilainya
         for (let i = 0; i < 12; i++) {
-            if (topVals[i] > 0 || bottomVals[i] > 0) {
+            if ((s.data[i] || 0) > 0) {
                 ctx.beginPath();
-                ctx.arc(xOf(i), yOf(topVals[i]), 3.5, 0, Math.PI * 2);
-                ctx.fillStyle = series[si].color;
+                ctx.arc(xOf(i), yOf(s.data[i]), 4, 0, Math.PI * 2);
+                ctx.fillStyle   = s.color;
                 ctx.fill();
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
                 ctx.stroke();
             }
         }
-    }
+    });
 
     // Label bulan
     for (let i = 0; i < 12; i++) {
@@ -725,22 +717,28 @@ function drawStackedArea(ctx, W, H, namaBulan, series, opts = {}) {
     const legendY = H - 8;
     let lx = padLeft;
     series.forEach(s => {
-        ctx.fillStyle = s.color;
-        ctx.fillRect(lx, legendY - 9, 14, 9);
+        // Garis pendek sebagai simbol legenda
+        ctx.strokeStyle = s.color; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.moveTo(lx, legendY - 4); ctx.lineTo(lx + 14, legendY - 4); ctx.stroke();
+        ctx.beginPath(); ctx.arc(lx + 7, legendY - 4, 3, 0, Math.PI * 2);
+        ctx.fillStyle = s.color; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
         ctx.fillStyle = '#475569'; ctx.font = '11px Segoe UI,sans-serif'; ctx.textAlign = 'left';
-        ctx.fillText(s.label, lx + 17, legendY);
-        lx += ctx.measureText(s.label).width + 34;
+        ctx.fillText(s.label, lx + 18, legendY);
+        lx += ctx.measureText(s.label).width + 36;
     });
 }
 
+// Alias agar pemanggilan lama tetap kompatibel
+const drawStackedArea = drawLineChart;
+
 // =========================================================================
-// 14. GRAFIK RINGKASAN BULANAN — Stacked Area Income & Expense + garis Saldo
+// 14. GRAFIK RINGKASAN BULANAN — Line Chart: Income, Expense & Saldo
 // =========================================================================
 function renderGrafikBulanan(dataTotal) {
     const namaBulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
     const income  = dataTotal.income;
     const expense = dataTotal.expense;
-
     const cv = setupCanvas('grafik-bulanan', 320);
     if (!cv) return;
     const { ctx, W, H } = cv;
@@ -756,62 +754,10 @@ function renderGrafikBulanan(dataTotal) {
         return;
     }
 
-    // Gambar stacked area Income (bawah) + Expense (atas)
-    drawStackedArea(ctx, W, H, namaBulan, [
+    drawLineChart(ctx, W, H, namaBulan, [
         { label: 'Income',  color: '#10b981', data: income  },
         { label: 'Expense', color: '#ef4444', data: expense }
     ], { padTop: 30, padBot: 50, padLeft: 72, padRight: 20 });
-
-    // Tambahkan garis Saldo di atasnya
-    const padTop = 30, padBot = 50, padLeft = 72, padRight = 20;
-    const chartW = W - padLeft - padRight;
-    const chartH = H - padTop - padBot;
-
-    // Hitung maxVal sama dengan yang dipakai drawStackedArea
-    const stacked = income.map((v, i) => v + expense[i]);
-    const maxVal  = Math.max(...stacked, 1) * 1.12;
-    const xOf = i => padLeft + i * (chartW / 11);
-    const yOf = v => padTop + chartH - (v / maxVal) * chartH;
-
-    const saldo = income.map((v, i) => v - expense[i]);
-    // Saldo bisa negatif — gambar relatif terhadap sumbu 0 pada skala yOf
-    // Kita klem ke dalam area supaya tidak keluar canvas
-    const saldoY = i => {
-        const ratio = saldo[i] / maxVal;
-        return padTop + chartH - ratio * chartH;
-    };
-
-    const saldoPoints = saldo.map((v, i) => ({
-        x: xOf(i), y: saldoY(i), val: v,
-        active: income[i] > 0 || expense[i] > 0
-    })).filter(p => p.active);
-
-    if (saldoPoints.length > 1) {
-        ctx.strokeStyle = '#2563eb';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 4]);
-        ctx.beginPath();
-        saldoPoints.forEach((p, idx) => idx === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
-
-    saldoPoints.forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = p.val >= 0 ? '#2563eb' : '#f97316';
-        ctx.fill();
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
-        ctx.stroke();
-    });
-
-    // Tambahkan Saldo ke legenda (sudah ada Income & Expense dari drawStackedArea)
-    const legendY = H - 8;
-    const lxSaldo = padLeft + 2 * (ctx.measureText('Income').width + 51);
-    ctx.fillStyle = '#2563eb';
-    ctx.beginPath(); ctx.arc(lxSaldo + 5, legendY - 4, 4.5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#475569'; ctx.font = '11px Segoe UI,sans-serif'; ctx.textAlign = 'left';
-    ctx.fillText('Saldo', lxSaldo + 13, legendY);
 }
 
 // =========================================================================
@@ -824,7 +770,7 @@ const WARNA_PALETTE = [
 ];
 
 // =========================================================================
-// 16. GRAFIK PER KATEGORI — Stacked Area per bulan, tiap kategori warna berbeda
+// 16. GRAFIK PER KATEGORI — Line Chart per bulan, tiap kategori warna berbeda
 // =========================================================================
 function renderGrafikKategori(dataMap, kategoriUrut) {
     const namaBulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
@@ -862,7 +808,7 @@ function renderGrafikKategori(dataMap, kategoriUrut) {
 }
 
 // =========================================================================
-// 17. GRAFIK PER SUB-KATEGORI — Stacked Area per bulan, tiap sub warna berbeda
+// 17. GRAFIK PER SUB-KATEGORI — Line Chart per bulan, tiap sub warna berbeda
 // =========================================================================
 function renderGrafikSubKategori(subDataMap, subKategoriUrut) {
     const namaBulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
@@ -898,7 +844,7 @@ function renderGrafikSubKategori(subDataMap, subKategoriUrut) {
 }
 
 // =========================================================================
-// 18. GRAFIK PER PIC — Stacked Area per bulan, tiap PIC warna berbeda
+// 18. GRAFIK PER PIC — Line Chart per bulan, tiap PIC warna berbeda
 // =========================================================================
 function renderGrafikPIC(picDataMap, daftarPIC) {
     const namaBulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
